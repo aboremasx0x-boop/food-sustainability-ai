@@ -1,0 +1,127 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #f4f7f5;
+  color: #102018;
+  font-family: Arial, sans-serif;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: #0d1f17;
+  color: white;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.brand {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.logo {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #11a653;
+  font-size: 24px;
+}
+
+.brand h2 { margin: 0; font-size: 20px; }
+.brand p { margin: 6px 0 0; opacity: 0.75; }
+
+nav { display: grid; gap: 10px; }
+nav a { padding: 14px; border-radius: 12px; background: rgba(255,255,255,0.08); }
+
+.live {
+  margin-top: auto;
+  background: rgba(17,166,83,0.22);
+  padding: 16px;
+  border-radius: 14px;
+  color: #aef1c6;
+}
+
+.content { padding: 32px; }
+
+.topbar {
+  background: linear-gradient(135deg, #ffffff, #eaf8ef);
+  border-radius: 28px;
+  padding: 34px;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  box-shadow: 0 20px 55px rgba(0,0,0,0.07);
+}
+
+.topbar h1 { margin: 0 0 12px; font-size: 42px; }
+.topbar p { margin: 0; max-width: 800px; color: #58695f; line-height: 1.8; }
+
+button {
+  border: 0;
+  background: #11a653;
+  color: white;
+  padding: 13px 22px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 700;
+  align-self: flex-start;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin: 24px 0;
+}
+
+.metric, .panel {
+  background: white;
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 16px 42px rgba(0,0,0,0.06);
+}
+
+.metric span { color: #66736c; }
+.metric strong { display: block; margin-top: 12px; font-size: 34px; color: #0d8741; }
+.metric small { color: #7b8a82; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 18px;
+}
+
+.panel h3 { margin-top: 0; }
+.analysis { display: grid; gap: 10px; }
+
+input {
+  width: 100%;
+  border: 1px solid #dbe5df;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.result {
+  background: #eefbf2;
+  border-radius: 14px;
+  padding: 14px;
+  color: #0d6934;
+}
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .topbar { flex-direction: column; }
+  .cards, .grid { grid-template-columns: 1fr; }
+  .topbar h1 { font-size: 32px; }
+}
