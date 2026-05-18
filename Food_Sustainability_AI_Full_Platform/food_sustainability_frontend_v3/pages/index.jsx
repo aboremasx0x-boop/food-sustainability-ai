@@ -5,9 +5,9 @@ export default function Home() {
   const [fileName, setFileName] = useState("");
   const [analysis, setAnalysis] = useState("");
 
-  function toggleDarkMode() {
-    setDarkMode(!darkMode);
-  }
+  const [totalWaste, setTotalWaste] = useState(248);
+  const [esg, setESG] = useState(87);
+  const [reduction, setReduction] = useState(12);
 
   function handleFileUpload(e) {
     const file = e.target.files[0];
@@ -19,23 +19,38 @@ export default function Home() {
 
       reader.onload = (event) => {
         const text = event.target.result;
+        const rows = text.split("\n").slice(1).filter((row) => row.trim() !== "");
 
-        const rows = text.split("\n");
+        let total = 0;
 
-        const totalRows = rows.length - 1;
+        rows.forEach((row) => {
+          const cols = row.split(",");
+          const wasteKg = parseFloat(cols[2]);
+
+          if (!isNaN(wasteKg)) {
+            total += wasteKg;
+          }
+        });
+
+        const predictedReduction = Math.round(total * 0.12);
+        const esgScore = Math.max(0, Math.min(100, Math.round(100 - total / 5)));
+
+        setTotalWaste(total);
+        setReduction(predictedReduction);
+        setESG(esgScore);
 
         setAnalysis(`
 نتائج تحليل الملف:
 
-• عدد الصفوف داخل الملف: ${totalRows}
+• إجمالي الهدر: ${total} KG
 
-• تم اكتشاف بيانات هدر غذائي قابلة للتحليل
+• عدد السجلات داخل الملف: ${rows.length}
 
-• يوجد احتمال لتقليل الهدر بنسبة 15%
+• التخفيض المتوقع: ${predictedReduction} KG
 
-• يوصى بتحسين إدارة التخزين والتوزيع
+• مؤشر ESG الحالي: ${esgScore}/100
 
-• الذكاء الاصطناعي يقترح تقليل الفائض اليومي
+• الذكاء الاصطناعي يقترح تحسين إدارة التخزين والتوزيع وتقليل الفائض اليومي.
 `);
       };
 
@@ -43,46 +58,41 @@ export default function Home() {
     }
   }
 
+  const pageStyle = {
+    minHeight: "100vh",
+    padding: "40px",
+    fontFamily: "Arial",
+    background: darkMode ? "#111827" : "#f3f4f6",
+    color: darkMode ? "white" : "#111827",
+  };
+
+  const cardStyle = {
+    background: darkMode ? "#1f2937" : "white",
+    padding: "25px",
+    borderRadius: "16px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+  };
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "40px",
-        fontFamily: "Arial",
-        background: darkMode ? "#111827" : "#f3f4f6",
-        color: darkMode ? "white" : "#111",
-        transition: "0.3s",
-      }}
-    >
-      <h1
-        style={{
-          fontSize: "48px",
-          marginBottom: "10px",
-        }}
-      >
+    <div style={pageStyle}>
+      <h1 style={{ fontSize: "46px", marginBottom: "10px" }}>
         Food Sustainability AI
       </h1>
 
-      <p
-        style={{
-          marginBottom: "30px",
-          fontSize: "18px",
-        }}
-      >
+      <p style={{ fontSize: "18px", marginBottom: "30px" }}>
         منصة ذكية لتحليل الهدر الغذائي والاستدامة باستخدام الذكاء الاصطناعي
       </p>
 
       <button
-        onClick={toggleDarkMode}
+        onClick={() => setDarkMode(!darkMode)}
         style={{
           padding: "12px 20px",
           borderRadius: "10px",
           border: "none",
-          cursor: "pointer",
-          marginBottom: "30px",
-          background: darkMode ? "#374151" : "#111827",
+          background: darkMode ? "#2563eb" : "#111827",
           color: "white",
-          fontWeight: "bold",
+          marginBottom: "30px",
+          cursor: "pointer",
         }}
       >
         {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
@@ -93,115 +103,71 @@ export default function Home() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))",
           gap: "20px",
-          marginBottom: "30px",
+          marginBottom: "35px",
         }}
       >
-        <div
-          style={{
-            background: darkMode ? "#1f2937" : "white",
-            padding: "25px",
-            borderRadius: "16px",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-          }}
-        >
+        <div style={cardStyle}>
           <h3>Total Waste</h3>
-
-          <h1 style={{ color: "#ef4444" }}>248 KG</h1>
+          <h1 style={{ color: "#ef4444" }}>{totalWaste} KG</h1>
         </div>
 
-        <div
-          style={{
-            background: darkMode ? "#1f2937" : "white",
-            padding: "25px",
-            borderRadius: "16px",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-          }}
-        >
+        <div style={cardStyle}>
           <h3>ESG Score</h3>
-
-          <h1 style={{ color: "#3b82f6" }}>87 / 100</h1>
+          <h1 style={{ color: "#3b82f6" }}>{esg} / 100</h1>
         </div>
 
-        <div
-          style={{
-            background: darkMode ? "#1f2937" : "white",
-            padding: "25px",
-            borderRadius: "16px",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-          }}
-        >
+        <div style={cardStyle}>
           <h3>Predicted Reduction</h3>
-
-          <h1 style={{ color: "#10b981" }}>12%</h1>
+          <h1 style={{ color: "#10b981" }}>{reduction} KG</h1>
         </div>
       </div>
 
-      <div
-        style={{
-          background: darkMode ? "#1f2937" : "white",
-          padding: "30px",
-          borderRadius: "16px",
-          marginBottom: "30px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-        }}
-      >
+      <div style={{ ...cardStyle, marginBottom: "35px" }}>
         <h2>Waste Analytics</h2>
 
-        <div style={{ marginTop: "20px" }}>
-          <div
-            style={{
-              background: "#ef4444",
-              width: "85%",
-              color: "white",
-              padding: "10px",
-              borderRadius: "10px",
-              marginBottom: "15px",
-            }}
-          >
-            Restaurants - 85%
-          </div>
+        <div
+          style={{
+            background: "#ef4444",
+            width: "85%",
+            padding: "10px",
+            color: "white",
+            borderRadius: "10px",
+            marginBottom: "15px",
+          }}
+        >
+          Restaurants - 85%
+        </div>
 
-          <div
-            style={{
-              background: "#f59e0b",
-              width: "60%",
-              color: "white",
-              padding: "10px",
-              borderRadius: "10px",
-              marginBottom: "15px",
-            }}
-          >
-            Hotels - 60%
-          </div>
+        <div
+          style={{
+            background: "#f59e0b",
+            width: "60%",
+            padding: "10px",
+            color: "white",
+            borderRadius: "10px",
+            marginBottom: "15px",
+          }}
+        >
+          Hotels - 60%
+        </div>
 
-          <div
-            style={{
-              background: "#14b8a6",
-              width: "40%",
-              color: "white",
-              padding: "10px",
-              borderRadius: "10px",
-            }}
-          >
-            Smart Reduction - 40%
-          </div>
+        <div
+          style={{
+            background: "#10b981",
+            width: "40%",
+            padding: "10px",
+            color: "white",
+            borderRadius: "10px",
+          }}
+        >
+          Smart Reduction - 40%
         </div>
       </div>
 
-      <div
-        style={{
-          background: darkMode ? "#1f2937" : "white",
-          padding: "30px",
-          borderRadius: "16px",
-          marginBottom: "30px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-        }}
-      >
+      <div style={{ ...cardStyle, marginBottom: "35px" }}>
         <h2>Upload Waste Data</h2>
 
-        <p style={{ marginBottom: "20px" }}>
-          ارفع ملف CSV يحتوي على بيانات الهدر الذكي لتحليلها داخل المنصة
-        </p>
+        <p>ارفع ملف CSV يحتوي على بيانات الهدر الغذائي.</p>
 
         <input type="file" accept=".csv" onChange={handleFileUpload} />
 
@@ -215,9 +181,9 @@ export default function Home() {
           <div
             style={{
               marginTop: "20px",
+              background: darkMode ? "#111827" : "#f9fafb",
               padding: "20px",
               borderRadius: "12px",
-              background: darkMode ? "#111827" : "#f9fafb",
               whiteSpace: "pre-line",
               lineHeight: "2",
             }}
@@ -227,30 +193,14 @@ export default function Home() {
         )}
       </div>
 
-      <div
-        style={{
-          background: darkMode ? "#1f2937" : "white",
-          padding: "30px",
-          borderRadius: "16px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-        }}
-      >
+      <div style={cardStyle}>
         <h2>AI Recommendations</h2>
 
-        <ul
-          style={{
-            lineHeight: "2",
-            marginTop: "15px",
-          }}
-        >
+        <ul style={{ lineHeight: "2", fontSize: "17px" }}>
           <li>تقليل الهدر في قسم الخضروات بنسبة 18%</li>
-
           <li>إعادة توزيع الفائض عبر الجمعيات الغذائية</li>
-
           <li>تحسين التنبؤ بالطلب باستخدام الذكاء الاصطناعي</li>
-
           <li>تحليل المنتجات قريبة الانتهاء يوميًا</li>
-
           <li>تقليل الانبعاثات الكربونية الناتجة عن الهدر</li>
         </ul>
       </div>
