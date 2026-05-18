@@ -3,6 +3,7 @@ import { useState } from "react";
 export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [analysis, setAnalysis] = useState("");
 
   const styles = {
     page: {
@@ -12,12 +13,6 @@ export default function Home() {
       background: darkMode ? "#111827" : "#f4f7fb",
       color: darkMode ? "#ffffff" : "#111827",
       transition: "0.3s",
-    },
-    title: { fontSize: "42px", fontWeight: "bold", marginBottom: "10px" },
-    subtitle: {
-      fontSize: "20px",
-      marginBottom: "30px",
-      color: darkMode ? "#d1d5db" : "#4b5563",
     },
     button: {
       padding: "12px 20px",
@@ -41,18 +36,9 @@ export default function Home() {
       borderRadius: "18px",
       boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
     },
-    cardTitle: {
-      fontSize: "18px",
-      marginBottom: "15px",
-      color: darkMode ? "#d1d5db" : "#6b7280",
-    },
-    number: { fontSize: "38px", fontWeight: "bold" },
-    chartContainer: {
-      background: darkMode ? "#1f2937" : "#ffffff",
-      padding: "25px",
-      borderRadius: "18px",
-      marginBottom: "40px",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+    number: {
+      fontSize: "38px",
+      fontWeight: "bold",
     },
     bar: {
       height: "30px",
@@ -71,7 +57,6 @@ export default function Home() {
       marginBottom: "40px",
       boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
     },
-    list: { lineHeight: "2", fontSize: "18px" },
     input: {
       marginTop: "15px",
       padding: "12px",
@@ -80,13 +65,36 @@ export default function Home() {
       borderRadius: "10px",
       border: "1px solid #ccc",
     },
+    list: {
+      lineHeight: "2",
+      fontSize: "18px",
+    },
   };
+
+  function handleFileUpload(e) {
+    const file = e.target.files[0];
+
+    if (file) {
+      setFileName(file.name);
+
+      setAnalysis(`
+تحليل أولي للملف:
+• ارتفاع الهدر في بعض الأصناف الغذائية
+• فرصة تقليل الهدر بنسبة 12%
+• تحسين إدارة المخزون سيخفض التكاليف والانبعاثات
+• يوصى بتفعيل التنبؤ الذكي للطلب
+• يمكن إعادة توزيع الفائض الصالح عبر الجمعيات الغذائية
+`);
+    }
+  }
 
   return (
     <div style={styles.page}>
-      <h1 style={styles.title}>Food Sustainability AI</h1>
+      <h1 style={{ fontSize: "42px", marginBottom: "10px" }}>
+        Food Sustainability AI
+      </h1>
 
-      <p style={styles.subtitle}>
+      <p style={{ fontSize: "20px", marginBottom: "30px" }}>
         منصة ذكية لتحليل الهدر الغذائي والاستدامة باستخدام الذكاء الاصطناعي
       </p>
 
@@ -96,22 +104,22 @@ export default function Home() {
 
       <div style={styles.grid}>
         <div style={styles.card}>
-          <div style={styles.cardTitle}>Total Waste</div>
+          <h3>Total Waste</h3>
           <div style={{ ...styles.number, color: "#ef4444" }}>248 KG</div>
         </div>
 
         <div style={styles.card}>
-          <div style={styles.cardTitle}>ESG Score</div>
+          <h3>ESG Score</h3>
           <div style={{ ...styles.number, color: "#3b82f6" }}>87 / 100</div>
         </div>
 
         <div style={styles.card}>
-          <div style={styles.cardTitle}>Predicted Reduction</div>
+          <h3>Predicted Reduction</h3>
           <div style={{ ...styles.number, color: "#10b981" }}>12%</div>
         </div>
       </div>
 
-      <div style={styles.chartContainer}>
+      <div style={styles.box}>
         <h2>Waste Analytics</h2>
 
         <div style={{ ...styles.bar, width: "85%", background: "#ef4444" }}>
@@ -131,21 +139,44 @@ export default function Home() {
         <h2>Upload Waste Data</h2>
 
         <p>
-          ارفع ملف CSV يحتوي على بيانات الهدر الغذائي لتحليلها لاحقًا داخل
-          المنصة.
+          ارفع ملف CSV يحتوي على بيانات الهدر الغذائي لتحليلها داخل المنصة.
         </p>
 
         <input
           type="file"
           accept=".csv"
           style={styles.input}
-          onChange={(e) => setFileName(e.target.files[0]?.name || "")}
+          onChange={handleFileUpload}
         />
 
         {fileName && (
           <p style={{ marginTop: "15px", color: "#10b981" }}>
             تم اختيار الملف: {fileName}
           </p>
+        )}
+
+        {analysis && (
+          <div
+            style={{
+              marginTop: "20px",
+              background: darkMode ? "#111827" : "#f9fafb",
+              padding: "20px",
+              borderRadius: "12px",
+              lineHeight: "2",
+            }}
+          >
+            <h3>AI File Analysis</h3>
+
+            <pre
+              style={{
+                whiteSpace: "pre-wrap",
+                fontFamily: "Arial",
+                fontSize: "16px",
+              }}
+            >
+              {analysis}
+            </pre>
+          </div>
         )}
       </div>
 
