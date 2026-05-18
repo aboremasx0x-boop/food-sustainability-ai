@@ -1,13 +1,23 @@
 import { useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
   const [fileName, setFileName] = useState("");
   const [analysis, setAnalysis] = useState("");
+
   const [totalWaste, setTotalWaste] = useState(248);
   const [esg, setESG] = useState(87);
   const [reduction, setReduction] = useState(12);
   const [topCategory, setTopCategory] = useState("Restaurants");
+
   const [categoryStats, setCategoryStats] = useState([]);
 
   function handleFileUpload(e) {
@@ -20,29 +30,45 @@ export default function Home() {
 
     reader.onload = (event) => {
       const text = event.target.result;
-      const rows = text.split("\n").slice(1).filter((row) => row.trim() !== "");
+
+      const rows = text
+        .split("\n")
+        .slice(1)
+        .filter((row) => row.trim() !== "");
 
       let total = 0;
+
       const categories = {};
 
       rows.forEach((row) => {
         const cols = row.split(",");
+
         const category = cols[1]?.trim();
         const wasteKg = parseFloat(cols[2]);
 
         if (category && !isNaN(wasteKg)) {
           total += wasteKg;
-          categories[category] = (categories[category] || 0) + wasteKg;
+
+          categories[category] =
+            (categories[category] || 0) + wasteKg;
         }
       });
 
       const sortedCategories = Object.entries(categories)
-        .map(([name, value]) => ({ name, value }))
+        .map(([name, value]) => ({
+          name,
+          value,
+        }))
         .sort((a, b) => b.value - a.value);
 
-      const highest = sortedCategories[0]?.name || "غير محدد";
+      const highest = sortedCategories[0]?.name || "Unknown";
+
       const predictedReduction = Math.round(total * 0.12);
-      const esgScore = Math.max(0, Math.min(100, Math.round(100 - total / 5)));
+
+      const esgScore = Math.max(
+        0,
+        Math.min(100, Math.round(100 - total / 5))
+      );
 
       setTotalWaste(total);
       setReduction(predictedReduction);
@@ -51,16 +77,16 @@ export default function Home() {
       setCategoryStats(sortedCategories);
 
       setAnalysis(`
-نتائج تحليل الملف:
+نتائج التحليل الذكي:
 
 • إجمالي الهدر: ${total} KG
-• عدد السجلات داخل الملف: ${rows.length}
-• أعلى قطاع في الهدر: ${highest}
+• عدد السجلات: ${rows.length}
+• أعلى قطاع هدر: ${highest}
 • التخفيض المتوقع: ${predictedReduction} KG
-• مؤشر ESG الحالي: ${esgScore}/100
+• مؤشر ESG: ${esgScore}/100
 
-التوصية الذكية:
-ابدأ بتقليل الهدر في قطاع ${highest} لأنه يمثل أعلى مساهمة في الهدر داخل الملف.
+التوصية:
+ابدأ بتقليل الهدر في قطاع ${highest}.
 `);
     };
 
@@ -84,12 +110,12 @@ export default function Home() {
 
   return (
     <div style={pageStyle}>
-      <h1 style={{ fontSize: "46px", marginBottom: "10px" }}>
+      <h1 style={{ fontSize: "48px" }}>
         Food Sustainability AI
       </h1>
 
-      <p style={{ fontSize: "18px", marginBottom: "30px" }}>
-        منصة ذكية لتحليل الهدر الغذائي والاستدامة باستخدام الذكاء الاصطناعي
+      <p style={{ marginBottom: "25px" }}>
+        منصة ذكية لتحليل الهدر الغذائي باستخدام الذكاء الاصطناعي
       </p>
 
       <button
@@ -110,40 +136,52 @@ export default function Home() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))",
+          gridTemplateColumns:
+            "repeat(auto-fit,minmax(240px,1fr))",
           gap: "20px",
           marginBottom: "35px",
         }}
       >
         <div style={cardStyle}>
           <h3>Total Waste</h3>
-          <h1 style={{ color: "#ef4444" }}>{totalWaste} KG</h1>
+          <h1 style={{ color: "#ef4444" }}>
+            {totalWaste} KG
+          </h1>
         </div>
 
         <div style={cardStyle}>
           <h3>ESG Score</h3>
-          <h1 style={{ color: "#3b82f6" }}>{esg} / 100</h1>
+          <h1 style={{ color: "#3b82f6" }}>
+            {esg}/100
+          </h1>
         </div>
 
         <div style={cardStyle}>
           <h3>Predicted Reduction</h3>
-          <h1 style={{ color: "#10b981" }}>{reduction} KG</h1>
+          <h1 style={{ color: "#10b981" }}>
+            {reduction} KG
+          </h1>
         </div>
 
         <div style={cardStyle}>
           <h3>Top Waste Sector</h3>
-          <h1 style={{ color: "#f59e0b" }}>{topCategory}</h1>
+          <h1 style={{ color: "#f59e0b" }}>
+            {topCategory}
+          </h1>
         </div>
       </div>
 
       <div style={{ ...cardStyle, marginBottom: "35px" }}>
         <h2>Upload Waste Data</h2>
-        <p>ارفع ملف CSV يحتوي على: Date, Category, WasteKG, Location</p>
 
-        <input type="file" accept=".csv" onChange={handleFileUpload} />
+        <input
+          type="file"
+          accept=".csv"
+          onChange={handleFileUpload}
+        />
 
         {fileName && (
-          <p style={{ marginTop: "15px", color: "#10b981" }}>
+          <p style={{ marginTop: "15px" }}>
             تم رفع الملف: {fileName}
           </p>
         )}
@@ -152,9 +190,11 @@ export default function Home() {
           <div
             style={{
               marginTop: "20px",
-              background: darkMode ? "#111827" : "#f9fafb",
               padding: "20px",
               borderRadius: "12px",
+              background: darkMode
+                ? "#111827"
+                : "#f9fafb",
               whiteSpace: "pre-line",
               lineHeight: "2",
             }}
@@ -164,38 +204,19 @@ export default function Home() {
         )}
       </div>
 
-      <div style={{ ...cardStyle, marginBottom: "35px" }}>
-        <h2>Dynamic Waste Analytics</h2>
-
-        {categoryStats.length === 0 ? (
-          <p>ارفع ملف CSV لعرض التحليل الديناميكي حسب القطاع.</p>
-        ) : (
-          categoryStats.map((item) => (
-            <div key={item.name} style={{ marginBottom: "15px" }}>
-              <strong>{item.name} - {item.value} KG</strong>
-              <div
-                style={{
-                  marginTop: "8px",
-                  width: `${Math.min(100, (item.value / totalWaste) * 100)}%`,
-                  background: "#10b981",
-                  height: "26px",
-                  borderRadius: "10px",
-                }}
-              />
-            </div>
-          ))
-        )}
-      </div>
-
       <div style={cardStyle}>
-        <h2>AI Recommendations</h2>
-        <ul style={{ lineHeight: "2", fontSize: "17px" }}>
-          <li>ابدأ بتحليل القطاع الأعلى هدرًا يوميًا.</li>
-          <li>قلل الإنتاج في الأصناف ذات الهدر المتكرر.</li>
-          <li>فعّل التنبؤ بالطلب قبل التجهيز اليومي.</li>
-          <li>حوّل الفائض الصالح إلى الجمعيات الغذائية.</li>
-          <li>استخدم البيانات لتحسين مؤشر ESG شهريًا.</li>
-        </ul>
+        <h2>Waste Analytics Chart</h2>
+
+        <div style={{ width: "100%", height: 400 }}>
+          <ResponsiveContainer>
+            <BarChart data={categoryStats}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" fill="#10b981" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
