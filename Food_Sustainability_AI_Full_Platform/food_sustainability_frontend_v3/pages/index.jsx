@@ -4,58 +4,67 @@ export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
   const [fileName, setFileName] = useState("");
   const [analysis, setAnalysis] = useState("");
-
   const [totalWaste, setTotalWaste] = useState(248);
   const [esg, setESG] = useState(87);
   const [reduction, setReduction] = useState(12);
+  const [topCategory, setTopCategory] = useState("Restaurants");
+  const [categoryStats, setCategoryStats] = useState([]);
 
   function handleFileUpload(e) {
     const file = e.target.files[0];
+    if (!file) return;
 
-    if (file) {
-      setFileName(file.name);
+    setFileName(file.name);
 
-      const reader = new FileReader();
+    const reader = new FileReader();
 
-      reader.onload = (event) => {
-        const text = event.target.result;
-        const rows = text.split("\n").slice(1).filter((row) => row.trim() !== "");
+    reader.onload = (event) => {
+      const text = event.target.result;
+      const rows = text.split("\n").slice(1).filter((row) => row.trim() !== "");
 
-        let total = 0;
+      let total = 0;
+      const categories = {};
 
-        rows.forEach((row) => {
-          const cols = row.split(",");
-          const wasteKg = parseFloat(cols[2]);
+      rows.forEach((row) => {
+        const cols = row.split(",");
+        const category = cols[1]?.trim();
+        const wasteKg = parseFloat(cols[2]);
 
-          if (!isNaN(wasteKg)) {
-            total += wasteKg;
-          }
-        });
+        if (category && !isNaN(wasteKg)) {
+          total += wasteKg;
+          categories[category] = (categories[category] || 0) + wasteKg;
+        }
+      });
 
-        const predictedReduction = Math.round(total * 0.12);
-        const esgScore = Math.max(0, Math.min(100, Math.round(100 - total / 5)));
+      const sortedCategories = Object.entries(categories)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
 
-        setTotalWaste(total);
-        setReduction(predictedReduction);
-        setESG(esgScore);
+      const highest = sortedCategories[0]?.name || "غير محدد";
+      const predictedReduction = Math.round(total * 0.12);
+      const esgScore = Math.max(0, Math.min(100, Math.round(100 - total / 5)));
 
-        setAnalysis(`
+      setTotalWaste(total);
+      setReduction(predictedReduction);
+      setESG(esgScore);
+      setTopCategory(highest);
+      setCategoryStats(sortedCategories);
+
+      setAnalysis(`
 نتائج تحليل الملف:
 
 • إجمالي الهدر: ${total} KG
-
 • عدد السجلات داخل الملف: ${rows.length}
-
+• أعلى قطاع في الهدر: ${highest}
 • التخفيض المتوقع: ${predictedReduction} KG
-
 • مؤشر ESG الحالي: ${esgScore}/100
 
-• الذكاء الاصطناعي يقترح تحسين إدارة التخزين والتوزيع وتقليل الفائض اليومي.
+التوصية الذكية:
+ابدأ بتقليل الهدر في قطاع ${highest} لأنه يمثل أعلى مساهمة في الهدر داخل الملف.
 `);
-      };
+    };
 
-      reader.readAsText(file);
-    }
+    reader.readAsText(file);
   }
 
   const pageStyle = {
@@ -120,54 +129,16 @@ export default function Home() {
           <h3>Predicted Reduction</h3>
           <h1 style={{ color: "#10b981" }}>{reduction} KG</h1>
         </div>
-      </div>
 
-      <div style={{ ...cardStyle, marginBottom: "35px" }}>
-        <h2>Waste Analytics</h2>
-
-        <div
-          style={{
-            background: "#ef4444",
-            width: "85%",
-            padding: "10px",
-            color: "white",
-            borderRadius: "10px",
-            marginBottom: "15px",
-          }}
-        >
-          Restaurants - 85%
-        </div>
-
-        <div
-          style={{
-            background: "#f59e0b",
-            width: "60%",
-            padding: "10px",
-            color: "white",
-            borderRadius: "10px",
-            marginBottom: "15px",
-          }}
-        >
-          Hotels - 60%
-        </div>
-
-        <div
-          style={{
-            background: "#10b981",
-            width: "40%",
-            padding: "10px",
-            color: "white",
-            borderRadius: "10px",
-          }}
-        >
-          Smart Reduction - 40%
+        <div style={cardStyle}>
+          <h3>Top Waste Sector</h3>
+          <h1 style={{ color: "#f59e0b" }}>{topCategory}</h1>
         </div>
       </div>
 
       <div style={{ ...cardStyle, marginBottom: "35px" }}>
         <h2>Upload Waste Data</h2>
-
-        <p>ارفع ملف CSV يحتوي على بيانات الهدر الغذائي.</p>
+        <p>ارفع ملف CSV يحتوي على: Date, Category, WasteKG, Location</p>
 
         <input type="file" accept=".csv" onChange={handleFileUpload} />
 
@@ -193,15 +164,37 @@ export default function Home() {
         )}
       </div>
 
+      <div style={{ ...cardStyle, marginBottom: "35px" }}>
+        <h2>Dynamic Waste Analytics</h2>
+
+        {categoryStats.length === 0 ? (
+          <p>ارفع ملف CSV لعرض التحليل الديناميكي حسب القطاع.</p>
+        ) : (
+          categoryStats.map((item) => (
+            <div key={item.name} style={{ marginBottom: "15px" }}>
+              <strong>{item.name} - {item.value} KG</strong>
+              <div
+                style={{
+                  marginTop: "8px",
+                  width: `${Math.min(100, (item.value / totalWaste) * 100)}%`,
+                  background: "#10b981",
+                  height: "26px",
+                  borderRadius: "10px",
+                }}
+              />
+            </div>
+          ))
+        )}
+      </div>
+
       <div style={cardStyle}>
         <h2>AI Recommendations</h2>
-
         <ul style={{ lineHeight: "2", fontSize: "17px" }}>
-          <li>تقليل الهدر في قسم الخضروات بنسبة 18%</li>
-          <li>إعادة توزيع الفائض عبر الجمعيات الغذائية</li>
-          <li>تحسين التنبؤ بالطلب باستخدام الذكاء الاصطناعي</li>
-          <li>تحليل المنتجات قريبة الانتهاء يوميًا</li>
-          <li>تقليل الانبعاثات الكربونية الناتجة عن الهدر</li>
+          <li>ابدأ بتحليل القطاع الأعلى هدرًا يوميًا.</li>
+          <li>قلل الإنتاج في الأصناف ذات الهدر المتكرر.</li>
+          <li>فعّل التنبؤ بالطلب قبل التجهيز اليومي.</li>
+          <li>حوّل الفائض الصالح إلى الجمعيات الغذائية.</li>
+          <li>استخدم البيانات لتحسين مؤشر ESG شهريًا.</li>
         </ul>
       </div>
     </div>
