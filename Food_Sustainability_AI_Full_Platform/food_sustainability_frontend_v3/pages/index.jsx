@@ -12,14 +12,18 @@ export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
   const [fileName, setFileName] = useState("");
   const [analysis, setAnalysis] = useState("");
+
   const [totalWaste, setTotalWaste] = useState(248);
   const [esg, setESG] = useState(87);
   const [reduction, setReduction] = useState(12);
+
   const [topCategory, setTopCategory] = useState("Restaurant");
   const [topFood, setTopFood] = useState("Rice");
   const [topLocation, setTopLocation] = useState("Jeddah");
+
   const [foodStats, setFoodStats] = useState([]);
   const [cityStats, setCityStats] = useState([]);
+  const [utilizationTips, setUtilizationTips] = useState([]);
 
   function handleFileUpload(e) {
     const file = e.target.files[0];
@@ -37,6 +41,17 @@ export default function Home() {
       const categories = {};
       const foods = {};
       const locations = {};
+
+      const utilizationMap = {
+        Rice: "تحويله إلى أعلاف أو سماد عضوي بعد المعالجة المناسبة",
+        Bread: "استخدامه كعلف حيواني أو تحويله إلى سماد عضوي",
+        Vegetables: "تحويله إلى Compost أو سماد حيوي",
+        Fruits: "إنتاج سماد عضوي أو مستخلصات طبيعية",
+        Coffee: "استخدامه في السماد أو الوقود الحيوي أو منتجات التقشير",
+        Chicken: "إعادة تدوير البروتين الحيواني وفق اشتراطات السلامة",
+        Meat: "معالجة متخصصة لإنتاج طاقة حيوية أو تدوير بروتيني",
+        Fish: "إعادة تدوير بروتيني أو تحويله إلى سماد عضوي متخصص",
+      };
 
       rows.forEach((row) => {
         const cols = row.split(",");
@@ -74,6 +89,14 @@ export default function Home() {
       const predictedReduction = Math.round(total * 0.12);
       const esgScore = Math.max(0, Math.min(100, Math.round(100 - total / 5)));
 
+      const tips = sortedFoods.map((item) => ({
+        food: item.name,
+        amount: item.value,
+        suggestion:
+          utilizationMap[item.name] ||
+          "إعادة تدوير غذائي أو تحويله إلى سماد أو طاقة حيوية حسب نوع المخلف",
+      }));
+
       setTotalWaste(total);
       setReduction(predictedReduction);
       setESG(esgScore);
@@ -82,6 +105,7 @@ export default function Home() {
       setTopLocation(highestLocation);
       setFoodStats(sortedFoods);
       setCityStats(sortedLocations);
+      setUtilizationTips(tips);
 
       setAnalysis(`
 نتائج التحليل الذكي:
@@ -118,7 +142,7 @@ export default function Home() {
         </h1>
 
         <p style={{ fontSize: "20px", marginBottom: "30px" }}>
-          منصة ذكية لتحليل الهدر الغذائي حسب القطاع ونوع الطعام والمدينة
+          منصة ذكية لتحليل الهدر الغذائي وتحويله إلى قيمة
         </p>
 
         <div style={{ display: "flex", gap: "12px", marginBottom: "35px" }}>
@@ -199,6 +223,36 @@ export default function Home() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </Section>
+
+        <Section darkMode={darkMode}>
+          <h2>Smart Waste Utilization</h2>
+          <p>اقتراحات ذكية للاستفادة من الهدر وتحويله إلى قيمة اقتصادية وبيئية.</p>
+
+          {utilizationTips.length === 0 ? (
+            <p>ارفع ملف CSV لعرض طرق الاستفادة من أنواع الهدر.</p>
+          ) : (
+            utilizationTips.map((tip, index) => (
+              <div
+                key={index}
+                style={{
+                  padding: "18px",
+                  marginBottom: "15px",
+                  borderRadius: "12px",
+                  background: darkMode ? "#111827" : "#f9fafb",
+                  border: darkMode ? "1px solid #334155" : "1px solid #e5e7eb",
+                }}
+              >
+                <h3 style={{ marginBottom: "8px", color: "#10b981" }}>
+                  {tip.food} — {tip.amount} KG
+                </h3>
+
+                <p style={{ margin: 0, lineHeight: "1.8" }}>
+                  {tip.suggestion}
+                </p>
+              </div>
+            ))
+          )}
         </Section>
       </div>
     </div>
