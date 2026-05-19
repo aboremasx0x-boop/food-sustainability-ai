@@ -20,7 +20,7 @@ export default function Home() {
   const [topCategory, setTopCategory] = useState("Restaurant");
   const [topFood, setTopFood] = useState("Rice");
   const [topLocation, setTopLocation] = useState("Jeddah");
-  const [bestPath, setBestPath] = useState("Animal Feed / Compost");
+  const [bestPath, setBestPath] = useState("Donation / Compost");
 
   const [financialLoss, setFinancialLoss] = useState(0);
   const [expectedSavings, setExpectedSavings] = useState(0);
@@ -36,26 +36,57 @@ export default function Home() {
 
   const [foodStats, setFoodStats] = useState([]);
   const [cityStats, setCityStats] = useState([]);
+  const [decisionActions, setDecisionActions] = useState([]);
   const [utilizationTips, setUtilizationTips] = useState([]);
 
-  const utilizationMap = {
-    Rice: { path: "Donation / Animal Feed / Compost", ar: "إذا كان صالحًا: تبرع غذائي، وإذا غير صالح: أعلاف أو سماد عضوي" },
-    Bread: { path: "Donation / Animal Feed", ar: "إذا كان صالحًا: تبرع غذائي، وإذا غير صالح: علف حيواني" },
-    Vegetables: { path: "Donation / Compost", ar: "إذا كانت صالحة: تبرع غذائي، وإذا غير صالحة: كومبوست أو سماد حيوي" },
-    Fruits: { path: "Donation / Compost / Extracts", ar: "إذا كانت صالحة: تبرع غذائي، وإذا غير صالحة: سماد أو مستخلصات طبيعية" },
-    Coffee: { path: "Compost / Biofuel", ar: "استخدامه في السماد أو الوقود الحيوي أو منتجات التقشير" },
-    Chicken: { path: "Donation if safe / Protein Recycling", ar: "إذا كان صالحًا وآمنًا: تبرع غذائي، وإلا تدوير بروتيني وفق الاشتراطات" },
-    Meat: { path: "Donation if safe / Biogas", ar: "إذا كان صالحًا وآمنًا: تبرع غذائي، وإلا طاقة حيوية أو تدوير بروتيني" },
-    Fish: { path: "Donation if safe / Protein Recycling", ar: "إذا كان صالحًا وآمنًا: تبرع غذائي، وإلا تدوير بروتيني أو سماد متخصص" },
-  };
+  function suggestedBeneficiary(city) {
+    if (city === "Jeddah") return "جمعية إطعام / بنك الطعام السعودي - جدة";
+    if (city === "Riyadh") return "جمعية إطعام / بنك الطعام السعودي - الرياض";
+    if (city === "Makkah" || city === "Mecca") return "جمعية حفظ النعمة - مكة";
+    if (city === "Dammam") return "جمعية إطعام - المنطقة الشرقية";
+    return "Food Bank / Local Charity";
+  }
 
-  function getUtilization(food) {
-    return (
-      utilizationMap[food] || {
-        path: "Donation / Compost / Biogas",
-        ar: "إذا كان صالحًا: تبرع غذائي، وإذا غير صالح: سماد أو طاقة حيوية",
-      }
-    );
+  function decidePath(food, edible) {
+    const f = (food || "").toLowerCase();
+
+    if (edible === "yes") {
+      return {
+        path: "Donation / Food Rescue",
+        action: `توجيه ${food} الصالح للتبرع إلى جمعية غذائية خلال نفس اليوم.`,
+        priority: "High",
+      };
+    }
+
+    if (["vegetables", "fruits", "rice", "bread"].includes(f)) {
+      return {
+        path: "Compost / Animal Feed",
+        action: `تحويل ${food} غير الصالح إلى سماد عضوي أو أعلاف بعد الفرز.`,
+        priority: "Medium",
+      };
+    }
+
+    if (f === "coffee") {
+      return {
+        path: "Compost / Biofuel",
+        action: "تجميع مخلفات القهوة لاستخدامها في السماد أو الوقود الحيوي.",
+        priority: "Medium",
+      };
+    }
+
+    if (["chicken", "meat", "fish"].includes(f)) {
+      return {
+        path: "Protein Recycling / Biogas",
+        action: `إرسال ${food} إلى مسار تدوير بروتيني أو طاقة حيوية وفق اشتراطات السلامة.`,
+        priority: "High",
+      };
+    }
+
+    return {
+      path: "Compost / Biogas",
+      action: `فرز ${food} وتوجيهه إلى سماد أو طاقة حيوية حسب حالته.`,
+      priority: "Low",
+    };
   }
 
   function calculateRisk(forecast) {
@@ -65,21 +96,9 @@ export default function Home() {
   }
 
   function getAdvice(risk, topFood, topCategory) {
-    if (risk === "High") {
-      return `خفض إنتاج ${topFood} في قطاع ${topCategory} بنسبة 15–20% خلال اليوم القادم.`;
-    }
-    if (risk === "Medium") {
-      return `مراقبة تجهيز ${topFood} وتقليل الكمية بنسبة 8–10% حسب الطلب الفعلي.`;
-    }
+    if (risk === "High") return `خفض إنتاج ${topFood} في قطاع ${topCategory} بنسبة 15–20% خلال اليوم القادم.`;
+    if (risk === "Medium") return `مراقبة تجهيز ${topFood} وتقليل الكمية بنسبة 8–10% حسب الطلب الفعلي.`;
     return "مستوى الهدر منخفض، استمر في المتابعة اليومية وتحسين التوزيع.";
-  }
-
-  function suggestedBeneficiary(city) {
-    if (city === "Jeddah") return "جمعية إطعام / بنك الطعام السعودي - جدة";
-    if (city === "Riyadh") return "جمعية إطعام / بنك الطعام السعودي - الرياض";
-    if (city === "Makkah" || city === "Mecca") return "جمعية حفظ النعمة - مكة";
-    if (city === "Dammam") return "جمعية إطعام - المنطقة الشرقية";
-    return "Food Bank / Local Charity";
   }
 
   function handleFileUpload(e) {
@@ -104,6 +123,7 @@ export default function Home() {
       const locations = {};
       const paths = {};
       const foodLosses = {};
+      const actions = [];
 
       rows.forEach((row) => {
         const cols = row.split(",");
@@ -117,15 +137,13 @@ export default function Home() {
 
         if (!isNaN(wasteKg)) {
           const rowLoss = wasteKg * unitCost;
+          const decision = decidePath(food, edible);
 
           total += wasteKg;
           totalLoss += rowLoss;
 
-          if (edible === "yes") {
-            edibleTotal += wasteKg;
-          } else {
-            recyclingTotal += wasteKg;
-          }
+          if (edible === "yes") edibleTotal += wasteKg;
+          else recyclingTotal += wasteKg;
 
           if (category) categories[category] = (categories[category] || 0) + wasteKg;
           if (location) locations[location] = (locations[location] || 0) + wasteKg;
@@ -133,9 +151,16 @@ export default function Home() {
           if (food) {
             foods[food] = (foods[food] || 0) + wasteKg;
             foodLosses[food] = (foodLosses[food] || 0) + rowLoss;
+            paths[decision.path] = (paths[decision.path] || 0) + wasteKg;
 
-            const utilization = getUtilization(food);
-            paths[utilization.path] = (paths[utilization.path] || 0) + wasteKg;
+            actions.push({
+              food,
+              wasteKg,
+              loss: Math.round(rowLoss),
+              path: decision.path,
+              action: decision.action,
+              priority: rowLoss > 200 ? "High" : decision.priority,
+            });
           }
         }
       });
@@ -154,7 +179,6 @@ export default function Home() {
 
       const predictedReduction = Math.round(total * 0.12);
       const esgScore = Math.max(0, Math.min(100, Math.round(100 - total / 5)));
-
       const roundedLoss = Math.round(totalLoss);
       const savings = Math.round(totalLoss * 0.12);
 
@@ -163,16 +187,18 @@ export default function Home() {
       const risk = calculateRisk(forecast);
       const advice = getAdvice(risk, highestFood, highestCategory);
 
-      const tips = sortedFoods.map((item) => {
-        const utilization = getUtilization(item.name);
-        const loss = Math.round(foodLosses[item.name] || 0);
+      const priorityActions = actions
+        .sort((a, b) => b.loss - a.loss)
+        .slice(0, 3);
 
+      const tips = sortedFoods.map((item) => {
+        const firstAction = actions.find((a) => a.food === item.name);
         return {
           food: item.name,
           amount: item.value,
-          loss,
-          path: utilization.path,
-          suggestion: utilization.ar,
+          loss: Math.round(foodLosses[item.name] || 0),
+          path: firstAction?.path || "Compost / Biogas",
+          suggestion: firstAction?.action || "فرز المخلف وتوجيهه إلى المسار الأنسب.",
         };
       });
 
@@ -194,6 +220,7 @@ export default function Home() {
       setBeneficiary(suggestedBeneficiary(highestLocation));
       setFoodStats(sortedFoods);
       setCityStats(sortedLocations);
+      setDecisionActions(priorityActions);
       setUtilizationTips(tips);
 
       setAnalysis(`
@@ -203,7 +230,6 @@ export default function Home() {
 • كمية قابلة للتبرع: ${edibleTotal} KG
 • كمية للتدوير/الاستفادة: ${recyclingTotal} KG
 • الجهة المقترحة: ${suggestedBeneficiary(highestLocation)}
-• عدد السجلات: ${rows.length}
 • أعلى قطاع هدر: ${highestCategory}
 • أكثر نوع طعام هدرًا: ${highestFood}
 • أعلى مدينة في الهدر: ${highestLocation}
@@ -215,11 +241,8 @@ export default function Home() {
 • مستوى الخطر: ${risk}
 • مؤشر ESG: ${esgScore}/100
 
-التوصية التشغيلية:
-${advice}
-
-مسار التبرع:
-توجيه ${edibleTotal} KG من الفائض الصالح إلى ${suggestedBeneficiary(highestLocation)}.
+قرار النظام:
+${priorityActions[0]?.action || advice}
 `);
     };
 
@@ -230,16 +253,12 @@ ${advice}
     <div style={{ minHeight: "100vh", background: darkMode ? "#0f172a" : "#f3f4f6", padding: "40px 20px", fontFamily: "Arial", color: darkMode ? "white" : "#111827" }}>
       <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
         <h1 style={{ fontSize: "48px", marginBottom: "10px" }}>Food Sustainability AI</h1>
-
-        <p style={{ fontSize: "20px", marginBottom: "30px" }}>
-          منصة ذكية لتحليل الهدر الغذائي وتحويله إلى تبرع أو قيمة اقتصادية وبيئية
-        </p>
+        <p style={{ fontSize: "20px", marginBottom: "30px" }}>منصة ذكية لتحليل الهدر الغذائي واتخاذ القرار الأمثل للاستفادة منه</p>
 
         <div style={{ display: "flex", gap: "12px", marginBottom: "35px", flexWrap: "wrap" }}>
           <button onClick={() => setDarkMode(!darkMode)} style={buttonStyle(darkMode)}>
             {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
           </button>
-
           <button onClick={() => window.print()} style={buttonStyle(darkMode)}>
             Export Report PDF
           </button>
@@ -261,11 +280,9 @@ ${advice}
 
         <Section darkMode={darkMode}>
           <h2>Upload Waste Data</h2>
-          <p>ارفع ملف CSV بهذا الترتيب: Date, Category, FoodType, WasteKG, Location, UnitCostSAR, Edible</p>
+          <p>CSV: Date, Category, FoodType, WasteKG, Location, UnitCostSAR, Edible</p>
           <input type="file" accept=".csv" onChange={handleFileUpload} />
-
           {fileName && <p style={{ marginTop: "15px" }}>تم رفع الملف: {fileName}</p>}
-
           {analysis && (
             <div style={{ marginTop: "20px", background: darkMode ? "#111827" : "#f9fafb", padding: "20px", borderRadius: "12px", lineHeight: "2", whiteSpace: "pre-line" }}>
               {analysis}
@@ -274,12 +291,28 @@ ${advice}
         </Section>
 
         <Section darkMode={darkMode}>
+          <h2>AI Waste Decision Engine — Priority Actions</h2>
+          {decisionActions.length === 0 ? (
+            <p>ارفع ملف CSV لعرض أولويات القرار.</p>
+          ) : (
+            decisionActions.map((item, index) => (
+              <div key={index} style={{ padding: "18px", marginBottom: "15px", borderRadius: "12px", background: darkMode ? "#111827" : "#f9fafb", border: darkMode ? "1px solid #334155" : "1px solid #e5e7eb" }}>
+                <h3 style={{ margin: "0 0 8px", color: item.priority === "High" ? "#ef4444" : item.priority === "Medium" ? "#f59e0b" : "#10b981" }}>
+                  Priority {index + 1}: {item.food} — {item.wasteKg} KG — {item.loss} SAR
+                </h3>
+                <p><strong>Priority Level:</strong> {item.priority}</p>
+                <p><strong>Decision Path:</strong> {item.path}</p>
+                <p style={{ lineHeight: "1.8" }}>{item.action}</p>
+              </div>
+            ))
+          )}
+        </Section>
+
+        <Section darkMode={darkMode}>
           <h2>Donation & Recycling Route</h2>
           <p style={{ lineHeight: "2", fontSize: "18px" }}>
-            <strong>Donation Eligible:</strong> {donationKg} KG
-            <br />
-            <strong>Recycling / Utilization:</strong> {recyclingKg} KG
-            <br />
+            <strong>Donation Eligible:</strong> {donationKg} KG<br />
+            <strong>Recycling / Utilization:</strong> {recyclingKg} KG<br />
             <strong>Suggested Beneficiary:</strong> {beneficiary}
           </p>
         </Section>
@@ -315,31 +348,22 @@ ${advice}
         <Section darkMode={darkMode}>
           <h2>Operational Forecast</h2>
           <p style={{ lineHeight: "2", fontSize: "18px" }}>
-            <strong>Next Waste Forecast:</strong> {nextWasteForecast} KG
-            <br />
-            <strong>Risk Level:</strong> {riskLevel}
-            <br />
+            <strong>Next Waste Forecast:</strong> {nextWasteForecast} KG<br />
+            <strong>Risk Level:</strong> {riskLevel}<br />
             <strong>Recommended Action:</strong> {operationAdvice}
           </p>
         </Section>
 
         <Section darkMode={darkMode}>
           <h2>Smart Waste Utilization</h2>
-
           {utilizationTips.length === 0 ? (
             <p>ارفع ملف CSV لعرض طرق الاستفادة من أنواع الهدر.</p>
           ) : (
             utilizationTips.map((tip, index) => (
               <div key={index} style={{ padding: "18px", marginBottom: "15px", borderRadius: "12px", background: darkMode ? "#111827" : "#f9fafb", border: darkMode ? "1px solid #334155" : "1px solid #e5e7eb" }}>
-                <h3 style={{ marginBottom: "8px", color: "#10b981" }}>
-                  {tip.food} — {tip.amount} KG — {tip.loss} SAR
-                </h3>
-
-                <p style={{ margin: "0 0 8px", lineHeight: "1.8" }}>
-                  <strong>Utilization Path:</strong> {tip.path}
-                </p>
-
-                <p style={{ margin: 0, lineHeight: "1.8" }}>{tip.suggestion}</p>
+                <h3 style={{ marginBottom: "8px", color: "#10b981" }}>{tip.food} — {tip.amount} KG — {tip.loss} SAR</h3>
+                <p><strong>Utilization Path:</strong> {tip.path}</p>
+                <p style={{ lineHeight: "1.8" }}>{tip.suggestion}</p>
               </div>
             ))
           )}
