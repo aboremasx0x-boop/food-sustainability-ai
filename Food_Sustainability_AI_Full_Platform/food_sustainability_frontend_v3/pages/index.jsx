@@ -22,50 +22,30 @@ export default function Home() {
   const [topLocation, setTopLocation] = useState("Jeddah");
   const [bestPath, setBestPath] = useState("Animal Feed / Compost");
 
+  const [financialLoss, setFinancialLoss] = useState(0);
+  const [expectedSavings, setExpectedSavings] = useState(0);
+  const [topLossFood, setTopLossFood] = useState("Rice");
+
   const [foodStats, setFoodStats] = useState([]);
   const [cityStats, setCityStats] = useState([]);
   const [utilizationTips, setUtilizationTips] = useState([]);
 
   const utilizationMap = {
-    Rice: {
-      path: "Animal Feed / Compost",
-      ar: "تحويله إلى أعلاف أو سماد عضوي بعد المعالجة المناسبة",
-    },
-    Bread: {
-      path: "Animal Feed",
-      ar: "استخدامه كعلف حيواني أو تحويله إلى سماد عضوي",
-    },
-    Vegetables: {
-      path: "Compost / Biofertilizer",
-      ar: "تحويله إلى كومبوست أو سماد حيوي",
-    },
-    Fruits: {
-      path: "Compost / Extracts",
-      ar: "إنتاج سماد عضوي أو مستخلصات طبيعية",
-    },
-    Coffee: {
-      path: "Compost / Biofuel",
-      ar: "استخدامه في السماد أو الوقود الحيوي أو منتجات التقشير",
-    },
-    Chicken: {
-      path: "Protein Recycling",
-      ar: "إعادة تدوير البروتين الحيواني وفق اشتراطات السلامة",
-    },
-    Meat: {
-      path: "Biogas / Protein Recycling",
-      ar: "معالجة متخصصة لإنتاج طاقة حيوية أو تدوير بروتيني",
-    },
-    Fish: {
-      path: "Protein Recycling / Organic Fertilizer",
-      ar: "إعادة تدوير بروتيني أو تحويله إلى سماد عضوي متخصص",
-    },
+    Rice: { path: "Animal Feed / Compost", ar: "تحويله إلى أعلاف أو سماد عضوي" },
+    Bread: { path: "Animal Feed", ar: "استخدامه كعلف حيواني أو سماد عضوي" },
+    Vegetables: { path: "Compost / Biofertilizer", ar: "تحويله إلى كومبوست أو سماد حيوي" },
+    Fruits: { path: "Compost / Extracts", ar: "إنتاج سماد عضوي أو مستخلصات طبيعية" },
+    Coffee: { path: "Compost / Biofuel", ar: "استخدامه في السماد أو الوقود الحيوي" },
+    Chicken: { path: "Protein Recycling", ar: "إعادة تدوير البروتين الحيواني وفق الاشتراطات" },
+    Meat: { path: "Biogas / Protein Recycling", ar: "إنتاج طاقة حيوية أو تدوير بروتيني" },
+    Fish: { path: "Protein Recycling / Organic Fertilizer", ar: "تدوير بروتيني أو سماد عضوي متخصص" },
   };
 
   function getUtilization(food) {
     return (
       utilizationMap[food] || {
         path: "Compost / Biogas",
-        ar: "إعادة تدوير غذائي أو تحويله إلى سماد أو طاقة حيوية حسب نوع المخلف",
+        ar: "إعادة تدوير غذائي أو تحويله إلى سماد أو طاقة حيوية",
       }
     );
   }
@@ -83,10 +63,13 @@ export default function Home() {
       const rows = text.split("\n").slice(1).filter((row) => row.trim() !== "");
 
       let total = 0;
+      let totalLoss = 0;
+
       const categories = {};
       const foods = {};
       const locations = {};
       const paths = {};
+      const foodLosses = {};
 
       rows.forEach((row) => {
         const cols = row.split(",");
@@ -95,17 +78,24 @@ export default function Home() {
         const food = cols[2]?.trim();
         const wasteKg = parseFloat(cols[3]);
         const location = cols[4]?.trim();
+        const unitCost = parseFloat(cols[5]) || 0;
 
         if (!isNaN(wasteKg)) {
+          const rowLoss = wasteKg * unitCost;
+
           total += wasteKg;
+          totalLoss += rowLoss;
 
           if (category) categories[category] = (categories[category] || 0) + wasteKg;
+          if (location) locations[location] = (locations[location] || 0) + wasteKg;
+
           if (food) {
             foods[food] = (foods[food] || 0) + wasteKg;
+            foodLosses[food] = (foodLosses[food] || 0) + rowLoss;
+
             const utilization = getUtilization(food);
             paths[utilization.path] = (paths[utilization.path] || 0) + wasteKg;
           }
-          if (location) locations[location] = (locations[location] || 0) + wasteKg;
         }
       });
 
@@ -125,20 +115,30 @@ export default function Home() {
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
+      const sortedFoodLosses = Object.entries(foodLosses)
+        .map(([name, value]) => ({ name, value: Math.round(value) }))
+        .sort((a, b) => b.value - a.value);
+
       const highestCategory = sortedCategories[0]?.name || "Unknown";
       const highestFood = sortedFoods[0]?.name || "Unknown";
       const highestLocation = sortedLocations[0]?.name || "Unknown";
       const strongestPath = sortedPaths[0]?.name || "Compost / Biogas";
+      const highestLossFood = sortedFoodLosses[0]?.name || "Unknown";
 
       const predictedReduction = Math.round(total * 0.12);
       const esgScore = Math.max(0, Math.min(100, Math.round(100 - total / 5)));
 
+      const roundedLoss = Math.round(totalLoss);
+      const savings = Math.round(totalLoss * 0.12);
+
       const tips = sortedFoods.map((item) => {
         const utilization = getUtilization(item.name);
+        const loss = Math.round(foodLosses[item.name] || 0);
 
         return {
           food: item.name,
           amount: item.value,
+          loss,
           path: utilization.path,
           suggestion: utilization.ar,
         };
@@ -151,6 +151,9 @@ export default function Home() {
       setTopFood(highestFood);
       setTopLocation(highestLocation);
       setBestPath(strongestPath);
+      setFinancialLoss(roundedLoss);
+      setExpectedSavings(savings);
+      setTopLossFood(highestLossFood);
       setFoodStats(sortedFoods);
       setCityStats(sortedLocations);
       setUtilizationTips(tips);
@@ -164,11 +167,14 @@ export default function Home() {
 • أكثر نوع طعام هدرًا: ${highestFood}
 • أعلى مدينة في الهدر: ${highestLocation}
 • أفضل مسار للاستفادة: ${strongestPath}
+• إجمالي الخسارة المالية: ${roundedLoss} SAR
+• أعلى صنف مسبب للخسارة: ${highestLossFood}
+• التوفير المتوقع: ${savings} SAR
 • التخفيض المتوقع: ${predictedReduction} KG
 • مؤشر ESG: ${esgScore}/100
 
 التوصية:
-تقليل هدر ${highestFood} داخل قطاع ${highestCategory} في مدينة ${highestLocation}، مع توجيه الهدر إلى مسار ${strongestPath}.
+ابدأ بتقليل هدر ${highestLossFood} لأنه أعلى صنف مسبب للخسارة المالية، مع توجيه الهدر إلى مسار ${strongestPath}.
 `);
     };
 
@@ -191,7 +197,7 @@ export default function Home() {
         </h1>
 
         <p style={{ fontSize: "20px", marginBottom: "30px" }}>
-          منصة ذكية لتحليل الهدر الغذائي وتحويله إلى قيمة
+          منصة ذكية لتحليل الهدر الغذائي وتحويله إلى قيمة اقتصادية وبيئية
         </p>
 
         <div style={{ display: "flex", gap: "12px", marginBottom: "35px", flexWrap: "wrap" }}>
@@ -213,17 +219,23 @@ export default function Home() {
           }}
         >
           <Card title="Total Waste" value={`${totalWaste} KG`} color="#ef4444" darkMode={darkMode} />
+          <Card title="Financial Loss" value={`${financialLoss} SAR`} color="#dc2626" darkMode={darkMode} />
+          <Card title="Expected Savings" value={`${expectedSavings} SAR`} color="#16a34a" darkMode={darkMode} />
           <Card title="ESG Score" value={`${esg}/100`} color="#3b82f6" darkMode={darkMode} />
           <Card title="Predicted Reduction" value={`${reduction} KG`} color="#10b981" darkMode={darkMode} />
           <Card title="Top Sector" value={topCategory} color="#f59e0b" darkMode={darkMode} />
           <Card title="Top Food Waste" value={topFood} color="#8b5cf6" darkMode={darkMode} />
+          <Card title="Top Loss Food" value={topLossFood} color="#be123c" darkMode={darkMode} />
           <Card title="Top Waste City" value={topLocation} color="#06b6d4" darkMode={darkMode} />
           <Card title="Best Utilization Path" value={bestPath} color="#22c55e" darkMode={darkMode} />
         </div>
 
         <Section darkMode={darkMode}>
           <h2>Upload Waste Data</h2>
-          <p>ارفع ملف CSV بهذا الترتيب: Date, Category, FoodType, WasteKG, Location</p>
+          <p>
+            ارفع ملف CSV بهذا الترتيب:
+            Date, Category, FoodType, WasteKG, Location, UnitCostSAR
+          </p>
 
           <input type="file" accept=".csv" onChange={handleFileUpload} />
 
@@ -247,6 +259,7 @@ export default function Home() {
 
         <Section darkMode={darkMode}>
           <h2>Food Waste Analytics</h2>
+
           <div style={{ width: "100%", height: 420 }}>
             <ResponsiveContainer>
               <BarChart data={foodStats}>
@@ -261,6 +274,7 @@ export default function Home() {
 
         <Section darkMode={darkMode}>
           <h2>City Waste Analytics</h2>
+
           <div style={{ width: "100%", height: 420 }}>
             <ResponsiveContainer>
               <BarChart data={cityStats}>
@@ -275,7 +289,6 @@ export default function Home() {
 
         <Section darkMode={darkMode}>
           <h2>Smart Waste Utilization</h2>
-          <p>اقتراحات ذكية للاستفادة من الهدر وتحويله إلى قيمة اقتصادية وبيئية.</p>
 
           {utilizationTips.length === 0 ? (
             <p>ارفع ملف CSV لعرض طرق الاستفادة من أنواع الهدر.</p>
@@ -292,7 +305,7 @@ export default function Home() {
                 }}
               >
                 <h3 style={{ marginBottom: "8px", color: "#10b981" }}>
-                  {tip.food} — {tip.amount} KG
+                  {tip.food} — {tip.amount} KG — {tip.loss} SAR
                 </h3>
 
                 <p style={{ margin: "0 0 8px", lineHeight: "1.8" }}>
