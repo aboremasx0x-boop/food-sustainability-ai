@@ -1,11 +1,6 @@
 import { useState } from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
 
 export default function Home() {
@@ -16,7 +11,6 @@ export default function Home() {
   const [totalWaste, setTotalWaste] = useState(248);
   const [esg, setESG] = useState(87);
   const [reduction, setReduction] = useState(12);
-
   const [topCategory, setTopCategory] = useState("Restaurant");
   const [topFood, setTopFood] = useState("Rice");
   const [topLocation, setTopLocation] = useState("Jeddah");
@@ -38,6 +32,10 @@ export default function Home() {
   const [cityStats, setCityStats] = useState([]);
   const [decisionActions, setDecisionActions] = useState([]);
   const [utilizationTips, setUtilizationTips] = useState([]);
+
+  const [sustainabilityScore, setSustainabilityScore] = useState(82);
+  const [sustainabilityRank, setSustainabilityRank] = useState("Silver");
+  const [scoreBreakdown, setScoreBreakdown] = useState([]);
 
   function suggestedBeneficiary(city) {
     if (city === "Jeddah") return "جمعية إطعام / بنك الطعام السعودي - جدة";
@@ -101,12 +99,18 @@ export default function Home() {
     return "مستوى الهدر منخفض، استمر في المتابعة اليومية وتحسين التوزيع.";
   }
 
+  function getRank(score) {
+    if (score >= 90) return "Gold";
+    if (score >= 75) return "Silver";
+    if (score >= 60) return "Bronze";
+    return "Critical";
+  }
+
   function handleFileUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
 
     setFileName(file.name);
-
     const reader = new FileReader();
 
     reader.onload = (event) => {
@@ -187,9 +191,29 @@ export default function Home() {
       const risk = calculateRisk(forecast);
       const advice = getAdvice(risk, highestFood, highestCategory);
 
-      const priorityActions = actions
-        .sort((a, b) => b.loss - a.loss)
-        .slice(0, 3);
+      const donationImpact = total > 0 ? Math.round((edibleTotal / total) * 100) : 0;
+      const recyclingEfficiency = total > 0 ? Math.round((recyclingTotal / total) * 100) : 0;
+      const financialOptimization = totalLoss > 0 ? Math.round((savings / totalLoss) * 100) : 0;
+      const wasteEfficiency = Math.max(0, Math.min(100, Math.round(100 - total / 5)));
+      const forecastStability = risk === "Low" ? 90 : risk === "Medium" ? 70 : 45;
+
+      const finalScore = Math.round(
+        wasteEfficiency * 0.25 +
+        donationImpact * 0.2 +
+        recyclingEfficiency * 0.2 +
+        financialOptimization * 0.15 +
+        forecastStability * 0.2
+      );
+
+      const breakdown = [
+        { name: "Waste Efficiency", value: wasteEfficiency },
+        { name: "Donation Impact", value: donationImpact },
+        { name: "Recycling Efficiency", value: recyclingEfficiency },
+        { name: "Financial Optimization", value: financialOptimization },
+        { name: "Forecast Stability", value: forecastStability },
+      ];
+
+      const priorityActions = actions.sort((a, b) => b.loss - a.loss).slice(0, 3);
 
       const tips = sortedFoods.map((item) => {
         const firstAction = actions.find((a) => a.food === item.name);
@@ -222,6 +246,9 @@ export default function Home() {
       setCityStats(sortedLocations);
       setDecisionActions(priorityActions);
       setUtilizationTips(tips);
+      setSustainabilityScore(finalScore);
+      setSustainabilityRank(getRank(finalScore));
+      setScoreBreakdown(breakdown);
 
       setAnalysis(`
 نتائج التحليل الذكي:
@@ -240,6 +267,8 @@ export default function Home() {
 • توقع الهدر القادم: ${forecast} KG
 • مستوى الخطر: ${risk}
 • مؤشر ESG: ${esgScore}/100
+• Sustainability Score: ${finalScore}/100
+• Rating: ${getRank(finalScore)}
 
 قرار النظام:
 ${priorityActions[0]?.action || advice}
@@ -253,7 +282,7 @@ ${priorityActions[0]?.action || advice}
     <div style={{ minHeight: "100vh", background: darkMode ? "#0f172a" : "#f3f4f6", padding: "40px 20px", fontFamily: "Arial", color: darkMode ? "white" : "#111827" }}>
       <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
         <h1 style={{ fontSize: "48px", marginBottom: "10px" }}>Food Sustainability AI</h1>
-        <p style={{ fontSize: "20px", marginBottom: "30px" }}>منصة ذكية لتحليل الهدر الغذائي واتخاذ القرار الأمثل للاستفادة منه</p>
+        <p style={{ fontSize: "20px", marginBottom: "30px" }}>منصة ذكية لتحليل الهدر الغذائي وتقييم الاستدامة وتحويل الهدر إلى قيمة</p>
 
         <div style={{ display: "flex", gap: "12px", marginBottom: "35px", flexWrap: "wrap" }}>
           <button onClick={() => setDarkMode(!darkMode)} style={buttonStyle(darkMode)}>
@@ -265,6 +294,8 @@ ${priorityActions[0]?.action || advice}
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: "20px", marginBottom: "35px" }}>
+          <Card title="Sustainability Score" value={`${sustainabilityScore}/100`} color="#22c55e" darkMode={darkMode} />
+          <Card title="Rating" value={sustainabilityRank} color={sustainabilityRank === "Gold" ? "#f59e0b" : sustainabilityRank === "Silver" ? "#94a3b8" : sustainabilityRank === "Bronze" ? "#b45309" : "#dc2626"} darkMode={darkMode} />
           <Card title="Total Waste" value={`${totalWaste} KG`} color="#ef4444" darkMode={darkMode} />
           <Card title="Donation Eligible" value={`${donationKg} KG`} color="#22c55e" darkMode={darkMode} />
           <Card title="Recycling Waste" value={`${recyclingKg} KG`} color="#84cc16" darkMode={darkMode} />
@@ -288,6 +319,25 @@ ${priorityActions[0]?.action || advice}
               {analysis}
             </div>
           )}
+        </Section>
+
+        <Section darkMode={darkMode}>
+          <h2>Sustainability Rating Dashboard</h2>
+          <p style={{ fontSize: "18px", lineHeight: "2" }}>
+            <strong>Final Score:</strong> {sustainabilityScore}/100<br />
+            <strong>Rating:</strong> {sustainabilityRank}
+          </p>
+
+          <div style={{ width: "100%", height: 360 }}>
+            <ResponsiveContainer>
+              <BarChart data={scoreBreakdown}>
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#22c55e" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </Section>
 
         <Section darkMode={darkMode}>
