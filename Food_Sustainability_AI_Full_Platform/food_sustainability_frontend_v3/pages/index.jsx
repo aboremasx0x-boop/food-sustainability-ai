@@ -17,7 +17,9 @@ export default function Home() {
   const [reduction, setReduction] = useState(12);
   const [topCategory, setTopCategory] = useState("Restaurant");
   const [topFood, setTopFood] = useState("Rice");
+  const [topLocation, setTopLocation] = useState("Jeddah");
   const [foodStats, setFoodStats] = useState([]);
+  const [cityStats, setCityStats] = useState([]);
 
   function handleFileUpload(e) {
     const file = e.target.files[0];
@@ -34,6 +36,7 @@ export default function Home() {
       let total = 0;
       const categories = {};
       const foods = {};
+      const locations = {};
 
       rows.forEach((row) => {
         const cols = row.split(",");
@@ -41,12 +44,14 @@ export default function Home() {
         const category = cols[1]?.trim();
         const food = cols[2]?.trim();
         const wasteKg = parseFloat(cols[3]);
+        const location = cols[4]?.trim();
 
         if (!isNaN(wasteKg)) {
           total += wasteKg;
 
           if (category) categories[category] = (categories[category] || 0) + wasteKg;
           if (food) foods[food] = (foods[food] || 0) + wasteKg;
+          if (location) locations[location] = (locations[location] || 0) + wasteKg;
         }
       });
 
@@ -58,8 +63,14 @@ export default function Home() {
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
+      const sortedLocations = Object.entries(locations)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
       const highestCategory = sortedCategories[0]?.name || "Unknown";
       const highestFood = sortedFoods[0]?.name || "Unknown";
+      const highestLocation = sortedLocations[0]?.name || "Unknown";
+
       const predictedReduction = Math.round(total * 0.12);
       const esgScore = Math.max(0, Math.min(100, Math.round(100 - total / 5)));
 
@@ -68,7 +79,9 @@ export default function Home() {
       setESG(esgScore);
       setTopCategory(highestCategory);
       setTopFood(highestFood);
+      setTopLocation(highestLocation);
       setFoodStats(sortedFoods);
+      setCityStats(sortedLocations);
 
       setAnalysis(`
 نتائج التحليل الذكي:
@@ -77,11 +90,12 @@ export default function Home() {
 • عدد السجلات: ${rows.length}
 • أعلى قطاع هدر: ${highestCategory}
 • أكثر نوع طعام هدرًا: ${highestFood}
+• أعلى مدينة في الهدر: ${highestLocation}
 • التخفيض المتوقع: ${predictedReduction} KG
 • مؤشر ESG: ${esgScore}/100
 
 التوصية:
-تقليل هدر ${highestFood} داخل قطاع ${highestCategory} ومراجعة كمية التجهيز اليومي.
+تقليل هدر ${highestFood} داخل قطاع ${highestCategory} في مدينة ${highestLocation}.
 `);
     };
 
@@ -104,7 +118,7 @@ export default function Home() {
         </h1>
 
         <p style={{ fontSize: "20px", marginBottom: "30px" }}>
-          منصة ذكية لتحليل الهدر الغذائي حسب القطاع ونوع الطعام
+          منصة ذكية لتحليل الهدر الغذائي حسب القطاع ونوع الطعام والمدينة
         </p>
 
         <div style={{ display: "flex", gap: "12px", marginBottom: "35px" }}>
@@ -130,6 +144,7 @@ export default function Home() {
           <Card title="Predicted Reduction" value={`${reduction} KG`} color="#10b981" darkMode={darkMode} />
           <Card title="Top Sector" value={topCategory} color="#f59e0b" darkMode={darkMode} />
           <Card title="Top Food Waste" value={topFood} color="#8b5cf6" darkMode={darkMode} />
+          <Card title="Top Waste City" value={topLocation} color="#06b6d4" darkMode={darkMode} />
         </div>
 
         <Section darkMode={darkMode}>
@@ -159,13 +174,28 @@ export default function Home() {
         <Section darkMode={darkMode}>
           <h2>Food Waste Analytics</h2>
 
-          <div style={{ width: "100%", height: 450 }}>
+          <div style={{ width: "100%", height: 420 }}>
             <ResponsiveContainer>
               <BarChart data={foodStats}>
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
                 <Bar dataKey="value" fill="#14b8a6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Section>
+
+        <Section darkMode={darkMode}>
+          <h2>City Waste Analytics</h2>
+
+          <div style={{ width: "100%", height: 420 }}>
+            <ResponsiveContainer>
+              <BarChart data={cityStats}>
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#06b6d4" />
               </BarChart>
             </ResponsiveContainer>
           </div>
