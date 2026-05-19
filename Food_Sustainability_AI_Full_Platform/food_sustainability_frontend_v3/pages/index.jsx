@@ -26,6 +26,10 @@ export default function Home() {
   const [expectedSavings, setExpectedSavings] = useState(0);
   const [topLossFood, setTopLossFood] = useState("Rice");
 
+  const [nextWasteForecast, setNextWasteForecast] = useState(0);
+  const [riskLevel, setRiskLevel] = useState("Low");
+  const [operationAdvice, setOperationAdvice] = useState("Upload CSV to generate forecast.");
+
   const [foodStats, setFoodStats] = useState([]);
   const [cityStats, setCityStats] = useState([]);
   const [utilizationTips, setUtilizationTips] = useState([]);
@@ -48,6 +52,24 @@ export default function Home() {
         ar: "إعادة تدوير غذائي أو تحويله إلى سماد أو طاقة حيوية",
       }
     );
+  }
+
+  function calculateRisk(forecast) {
+    if (forecast >= 40) return "High";
+    if (forecast >= 20) return "Medium";
+    return "Low";
+  }
+
+  function getAdvice(risk, topFood, topCategory) {
+    if (risk === "High") {
+      return `خفض إنتاج ${topFood} في قطاع ${topCategory} بنسبة 15–20% خلال اليوم القادم.`;
+    }
+
+    if (risk === "Medium") {
+      return `مراقبة تجهيز ${topFood} وتقليل الكمية بنسبة 8–10% حسب الطلب الفعلي.`;
+    }
+
+    return `مستوى الهدر منخفض، استمر في المتابعة اليومية وتحسين التوزيع.`;
   }
 
   function handleFileUpload(e) {
@@ -131,6 +153,11 @@ export default function Home() {
       const roundedLoss = Math.round(totalLoss);
       const savings = Math.round(totalLoss * 0.12);
 
+      const averageWaste = rows.length > 0 ? total / rows.length : 0;
+      const forecast = Math.round(averageWaste * 1.15);
+      const risk = calculateRisk(forecast);
+      const advice = getAdvice(risk, highestFood, highestCategory);
+
       const tips = sortedFoods.map((item) => {
         const utilization = getUtilization(item.name);
         const loss = Math.round(foodLosses[item.name] || 0);
@@ -154,6 +181,9 @@ export default function Home() {
       setFinancialLoss(roundedLoss);
       setExpectedSavings(savings);
       setTopLossFood(highestLossFood);
+      setNextWasteForecast(forecast);
+      setRiskLevel(risk);
+      setOperationAdvice(advice);
       setFoodStats(sortedFoods);
       setCityStats(sortedLocations);
       setUtilizationTips(tips);
@@ -170,11 +200,12 @@ export default function Home() {
 • إجمالي الخسارة المالية: ${roundedLoss} SAR
 • أعلى صنف مسبب للخسارة: ${highestLossFood}
 • التوفير المتوقع: ${savings} SAR
-• التخفيض المتوقع: ${predictedReduction} KG
+• توقع الهدر القادم: ${forecast} KG
+• مستوى الخطر: ${risk}
 • مؤشر ESG: ${esgScore}/100
 
-التوصية:
-ابدأ بتقليل هدر ${highestLossFood} لأنه أعلى صنف مسبب للخسارة المالية، مع توجيه الهدر إلى مسار ${strongestPath}.
+التوصية التشغيلية:
+${advice}
 `);
     };
 
@@ -221,6 +252,8 @@ export default function Home() {
           <Card title="Total Waste" value={`${totalWaste} KG`} color="#ef4444" darkMode={darkMode} />
           <Card title="Financial Loss" value={`${financialLoss} SAR`} color="#dc2626" darkMode={darkMode} />
           <Card title="Expected Savings" value={`${expectedSavings} SAR`} color="#16a34a" darkMode={darkMode} />
+          <Card title="Next Waste Forecast" value={`${nextWasteForecast} KG`} color="#f97316" darkMode={darkMode} />
+          <Card title="Risk Level" value={riskLevel} color={riskLevel === "High" ? "#dc2626" : riskLevel === "Medium" ? "#f59e0b" : "#16a34a"} darkMode={darkMode} />
           <Card title="ESG Score" value={`${esg}/100`} color="#3b82f6" darkMode={darkMode} />
           <Card title="Predicted Reduction" value={`${reduction} KG`} color="#10b981" darkMode={darkMode} />
           <Card title="Top Sector" value={topCategory} color="#f59e0b" darkMode={darkMode} />
@@ -259,7 +292,6 @@ export default function Home() {
 
         <Section darkMode={darkMode}>
           <h2>Food Waste Analytics</h2>
-
           <div style={{ width: "100%", height: 420 }}>
             <ResponsiveContainer>
               <BarChart data={foodStats}>
@@ -274,7 +306,6 @@ export default function Home() {
 
         <Section darkMode={darkMode}>
           <h2>City Waste Analytics</h2>
-
           <div style={{ width: "100%", height: 420 }}>
             <ResponsiveContainer>
               <BarChart data={cityStats}>
@@ -285,6 +316,17 @@ export default function Home() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </Section>
+
+        <Section darkMode={darkMode}>
+          <h2>Operational Forecast</h2>
+          <p style={{ lineHeight: "2", fontSize: "18px" }}>
+            <strong>Next Waste Forecast:</strong> {nextWasteForecast} KG
+            <br />
+            <strong>Risk Level:</strong> {riskLevel}
+            <br />
+            <strong>Recommended Action:</strong> {operationAdvice}
+          </p>
         </Section>
 
         <Section darkMode={darkMode}>
