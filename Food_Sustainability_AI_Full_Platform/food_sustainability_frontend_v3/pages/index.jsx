@@ -20,10 +20,55 @@ export default function Home() {
   const [topCategory, setTopCategory] = useState("Restaurant");
   const [topFood, setTopFood] = useState("Rice");
   const [topLocation, setTopLocation] = useState("Jeddah");
+  const [bestPath, setBestPath] = useState("Animal Feed / Compost");
 
   const [foodStats, setFoodStats] = useState([]);
   const [cityStats, setCityStats] = useState([]);
   const [utilizationTips, setUtilizationTips] = useState([]);
+
+  const utilizationMap = {
+    Rice: {
+      path: "Animal Feed / Compost",
+      ar: "تحويله إلى أعلاف أو سماد عضوي بعد المعالجة المناسبة",
+    },
+    Bread: {
+      path: "Animal Feed",
+      ar: "استخدامه كعلف حيواني أو تحويله إلى سماد عضوي",
+    },
+    Vegetables: {
+      path: "Compost / Biofertilizer",
+      ar: "تحويله إلى كومبوست أو سماد حيوي",
+    },
+    Fruits: {
+      path: "Compost / Extracts",
+      ar: "إنتاج سماد عضوي أو مستخلصات طبيعية",
+    },
+    Coffee: {
+      path: "Compost / Biofuel",
+      ar: "استخدامه في السماد أو الوقود الحيوي أو منتجات التقشير",
+    },
+    Chicken: {
+      path: "Protein Recycling",
+      ar: "إعادة تدوير البروتين الحيواني وفق اشتراطات السلامة",
+    },
+    Meat: {
+      path: "Biogas / Protein Recycling",
+      ar: "معالجة متخصصة لإنتاج طاقة حيوية أو تدوير بروتيني",
+    },
+    Fish: {
+      path: "Protein Recycling / Organic Fertilizer",
+      ar: "إعادة تدوير بروتيني أو تحويله إلى سماد عضوي متخصص",
+    },
+  };
+
+  function getUtilization(food) {
+    return (
+      utilizationMap[food] || {
+        path: "Compost / Biogas",
+        ar: "إعادة تدوير غذائي أو تحويله إلى سماد أو طاقة حيوية حسب نوع المخلف",
+      }
+    );
+  }
 
   function handleFileUpload(e) {
     const file = e.target.files[0];
@@ -41,17 +86,7 @@ export default function Home() {
       const categories = {};
       const foods = {};
       const locations = {};
-
-      const utilizationMap = {
-        Rice: "تحويله إلى أعلاف أو سماد عضوي بعد المعالجة المناسبة",
-        Bread: "استخدامه كعلف حيواني أو تحويله إلى سماد عضوي",
-        Vegetables: "تحويله إلى Compost أو سماد حيوي",
-        Fruits: "إنتاج سماد عضوي أو مستخلصات طبيعية",
-        Coffee: "استخدامه في السماد أو الوقود الحيوي أو منتجات التقشير",
-        Chicken: "إعادة تدوير البروتين الحيواني وفق اشتراطات السلامة",
-        Meat: "معالجة متخصصة لإنتاج طاقة حيوية أو تدوير بروتيني",
-        Fish: "إعادة تدوير بروتيني أو تحويله إلى سماد عضوي متخصص",
-      };
+      const paths = {};
 
       rows.forEach((row) => {
         const cols = row.split(",");
@@ -65,7 +100,11 @@ export default function Home() {
           total += wasteKg;
 
           if (category) categories[category] = (categories[category] || 0) + wasteKg;
-          if (food) foods[food] = (foods[food] || 0) + wasteKg;
+          if (food) {
+            foods[food] = (foods[food] || 0) + wasteKg;
+            const utilization = getUtilization(food);
+            paths[utilization.path] = (paths[utilization.path] || 0) + wasteKg;
+          }
           if (location) locations[location] = (locations[location] || 0) + wasteKg;
         }
       });
@@ -82,20 +121,28 @@ export default function Home() {
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
+      const sortedPaths = Object.entries(paths)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
       const highestCategory = sortedCategories[0]?.name || "Unknown";
       const highestFood = sortedFoods[0]?.name || "Unknown";
       const highestLocation = sortedLocations[0]?.name || "Unknown";
+      const strongestPath = sortedPaths[0]?.name || "Compost / Biogas";
 
       const predictedReduction = Math.round(total * 0.12);
       const esgScore = Math.max(0, Math.min(100, Math.round(100 - total / 5)));
 
-      const tips = sortedFoods.map((item) => ({
-        food: item.name,
-        amount: item.value,
-        suggestion:
-          utilizationMap[item.name] ||
-          "إعادة تدوير غذائي أو تحويله إلى سماد أو طاقة حيوية حسب نوع المخلف",
-      }));
+      const tips = sortedFoods.map((item) => {
+        const utilization = getUtilization(item.name);
+
+        return {
+          food: item.name,
+          amount: item.value,
+          path: utilization.path,
+          suggestion: utilization.ar,
+        };
+      });
 
       setTotalWaste(total);
       setReduction(predictedReduction);
@@ -103,6 +150,7 @@ export default function Home() {
       setTopCategory(highestCategory);
       setTopFood(highestFood);
       setTopLocation(highestLocation);
+      setBestPath(strongestPath);
       setFoodStats(sortedFoods);
       setCityStats(sortedLocations);
       setUtilizationTips(tips);
@@ -115,11 +163,12 @@ export default function Home() {
 • أعلى قطاع هدر: ${highestCategory}
 • أكثر نوع طعام هدرًا: ${highestFood}
 • أعلى مدينة في الهدر: ${highestLocation}
+• أفضل مسار للاستفادة: ${strongestPath}
 • التخفيض المتوقع: ${predictedReduction} KG
 • مؤشر ESG: ${esgScore}/100
 
 التوصية:
-تقليل هدر ${highestFood} داخل قطاع ${highestCategory} في مدينة ${highestLocation}.
+تقليل هدر ${highestFood} داخل قطاع ${highestCategory} في مدينة ${highestLocation}، مع توجيه الهدر إلى مسار ${strongestPath}.
 `);
     };
 
@@ -145,7 +194,7 @@ export default function Home() {
           منصة ذكية لتحليل الهدر الغذائي وتحويله إلى قيمة
         </p>
 
-        <div style={{ display: "flex", gap: "12px", marginBottom: "35px" }}>
+        <div style={{ display: "flex", gap: "12px", marginBottom: "35px", flexWrap: "wrap" }}>
           <button onClick={() => setDarkMode(!darkMode)} style={buttonStyle(darkMode)}>
             {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
           </button>
@@ -169,6 +218,7 @@ export default function Home() {
           <Card title="Top Sector" value={topCategory} color="#f59e0b" darkMode={darkMode} />
           <Card title="Top Food Waste" value={topFood} color="#8b5cf6" darkMode={darkMode} />
           <Card title="Top Waste City" value={topLocation} color="#06b6d4" darkMode={darkMode} />
+          <Card title="Best Utilization Path" value={bestPath} color="#22c55e" darkMode={darkMode} />
         </div>
 
         <Section darkMode={darkMode}>
@@ -197,7 +247,6 @@ export default function Home() {
 
         <Section darkMode={darkMode}>
           <h2>Food Waste Analytics</h2>
-
           <div style={{ width: "100%", height: 420 }}>
             <ResponsiveContainer>
               <BarChart data={foodStats}>
@@ -212,7 +261,6 @@ export default function Home() {
 
         <Section darkMode={darkMode}>
           <h2>City Waste Analytics</h2>
-
           <div style={{ width: "100%", height: 420 }}>
             <ResponsiveContainer>
               <BarChart data={cityStats}>
@@ -246,6 +294,10 @@ export default function Home() {
                 <h3 style={{ marginBottom: "8px", color: "#10b981" }}>
                   {tip.food} — {tip.amount} KG
                 </h3>
+
+                <p style={{ margin: "0 0 8px", lineHeight: "1.8" }}>
+                  <strong>Utilization Path:</strong> {tip.path}
+                </p>
 
                 <p style={{ margin: 0, lineHeight: "1.8" }}>
                   {tip.suggestion}
@@ -282,7 +334,7 @@ function Card({ title, value, color, darkMode }) {
       }}
     >
       <h3>{title}</h3>
-      <h1 style={{ color, fontSize: "38px" }}>{value}</h1>
+      <h1 style={{ color, fontSize: "34px" }}>{value}</h1>
     </div>
   );
 }
